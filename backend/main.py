@@ -101,9 +101,9 @@ class PackageModel(BaseModel):
         json_schema_extra={
             "example": {
                 "packageName": "MobileOnly",
-                "type" "default",
+                "type" :"default",
                 "category": "Mobile",
-                "products":: [{"device": "Mobile", "model": "Model X", "brand": "Brand A"}],
+                "products": [{"device": "Mobile", "model": "Model X", "brand": "Brand A"}],
                 "services": [
                     {"name": "minutes", "limit": 500},
                     {"name": "sms", "limit": 1000},
@@ -166,9 +166,8 @@ class CustomerModel(BaseModel):
         arbitrary_types_allowed=True,
         json_schema_extra={
             "example": {
-                
                 "name": "John Doe",
-                "dateOfBirth": "1995-01-01",
+                "dateOfBirth": "01/30/2000",
                 "address": "123 Main St",
                 "gender": "Male",
                 "phoneNumber": "+1234567890",
@@ -241,11 +240,10 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 # Retrieve the user from MongoDB by username or other unique identifier
 async def get_user(customer_collection, username: str):
-    customer_data = await customer_collection.find_one({"email": username})
-    logger.debug(f"customer_data: {customer_data}")  # Log the customer_data dictionary at DEBUG level
-    
+    customer_data = await customer_collection.find_one({"email": username}) # Log the customer_data dictionary at DEBUG level
     if customer_data is None:
         raise HTTPException(status_code=404, detail="Customer not found")
+    CustomerModel.id = customer_data
     return CustomerModel(**customer_data)
 
 async def authenticate_user(customer_collection, username: str, password: str):
@@ -371,7 +369,7 @@ async def login_for_access_token(
         )
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": user.name}, expires_delta=access_token_expires
     )
     return Token(access_token=access_token, token_type="bearer")
 
@@ -396,7 +394,7 @@ async def register(
     hashed_password = get_password_hash(password)
     customer_data = {
         "name": name,
-        "dateOfBirth": datetime.strptime(dateOfBirth, '%d-%m-%Y'),
+        "dateOfBirth": datetime.strptime(dateOfBirth, '%m/%d/%Y'),
         "address": address,
         "gender": gender,
         "email": email,
@@ -415,7 +413,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     """
     Log in a user using form data.
     """
-    email = form_data.username  # `OAuth2PasswordRequestForm` uses `username` for the login field
+    email = form_data.email  # `OAuth2PasswordRequestForm` uses `username` for the login field
     password = form_data.password
 
     # Retrieve user from the database
